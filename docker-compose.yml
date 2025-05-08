@@ -1,0 +1,40 @@
+version: '3.8'
+
+networks:
+  Portainer:
+    external: true
+
+services:
+  mcp-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-mcp-proxy:latest
+    container_name: mcp_proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "8080"
+    networks:
+      - Portainer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.puppeteer.rule=Host(`puppeteer.seu-dominio.com`)"
+      - "traefik.http.routers.puppeteer.entrypoints=websecure"
+      - "traefik.http.routers.puppeteer.tls.certresolver=le"
+      - "traefik.http.services.puppeteer.loadbalancer.server.port=8080"
+    command:
+      - --pass-environment
+      - --allow-origin=*
+      - --sse-port=8080
+      - --sse-host=0.0.0.0
+      - --debug
+      - --
+      - docker
+      - run
+      - -i
+      - --rm
+      - -e
+      - DOCKER_CONTAINER=true
+      - mcp/puppeteer
+
